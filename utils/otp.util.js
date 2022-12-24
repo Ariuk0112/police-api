@@ -16,7 +16,7 @@ exports.message = (phone, otp) => {
     key: process.env.API_KEY,
     from: 72220222,
     to: phone,
-    text: `ТМА Баталгаажуулах код : ${otp}`,
+    text: `Police Баталгаажуулах код : ${otp}`,
   };
 
   const get_request_args = querystring.stringify(parameters);

@@ -9,7 +9,6 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 const logger = require("morgan");
 const fs = require("fs");
-const connectDB = require("./api/db");
 const colors = require("colors");
 const fileupload = require("express-fileupload");
 const cors = require("cors");
@@ -22,8 +21,8 @@ app.use(
     parameterLimit: 50000,
   })
 );
-
-app.use(express.static("./public/sealjet"));
+global.__basedir = __dirname + "/..";
+app.use(express.static("./public"));
 // access-control-allow-credentials: true
 // access-control-allow-headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization
 // access-control-allow-methods: PUT, GET, POST, DELETE, OPTIONS, HEAD
@@ -53,8 +52,6 @@ const issue2options = {
 };
 // --------------------------------------------------------------------------------------
 // app config
-connectDB();
-
 app.use(cors(issue2options));
 app.use(logger("dev"));
 app.use(express.json());
@@ -63,17 +60,16 @@ app.use(bodyParser.text({ type: "*/xml" }));
 app.use(express.static("public"));
 app.use(fileupload());
 // main routes
-app.use("/api/showdy/auth", require("./api/auth/router"));
+app.use("/api/auth", require("./api/auth/router"));
 
-app.use("/api/showdy/coWorker", require("./api/coWorker/router"));
-app.use("/api/showdy/project", require("./api/project/router"));
-app.use("/api/showdy/category", require("./api/category/router"));
-app.use("/api/showdy/userDetail", require("./api/user/router"));
-app.use("/api/showdy/cars", require("./api/cars/router"));
-app.use("/api/showdy/auction", require("./api/auction/router"));
-app.use("/api/showdy/price", require("./api/price/router"));
-app.use("/api/showdy/order", require("./api/orders/router"));
-app.use("/api/showdy/equipment", require("./api/eqiupment/router"));
+app.use("/api/category", require("./api/category/router"));
+app.use("/api/crime", require("./api/crime/router"));
+app.use("/api/team", require("./api/managementTeam/router"));
+app.use("/api/news", require("./api/news/router"));
+app.use("/api/feedback", require("./api/feedback/router"));
+app.use("/api/report", require("./api/reports/router"));
+app.use("/api/department", require("./api/departments/router"));
+app.use("/api/faq", require("./api/faq/router"));
 
 // ADMIN routes
 

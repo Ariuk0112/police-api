@@ -3,9 +3,8 @@ const mail = require("../mail");
 const { generateOTP, message } = require("../../utils/otp.util");
 const empty = require("is-empty");
 const md5 = require("md5");
+const db = require("../db");
 const asyncHandler = require("../../middleware/asyncHandler");
-const User = require("../../models/users");
-const Admin = require("../../models/admin");
 function auth(req, res, next) {
   const header = req.headers["authorization"];
   const token = header && header.split(" ")[1];
@@ -47,151 +46,182 @@ module.exports = {
 
   createAccount: asyncHandler(async (req, res) => {
     if (req.body.username && req.body.password) {
-      let admin = req.body;
-      console.log(admin);
-      console.log("Username", admin.username);
-      admin.password = md5(admin.password);
-      let item = await new Admin({
-        ...admin,
-      }).save();
-      const accessToken = jwt.sign(
-        {
-          username: req.body.username,
-        },
-        process.env.SECRET,
-        process.env.EXRPIRE
+      console.log("sda");
+      let { username, password } = req.body;
+      db.query(
+        "call sp_create_admin_account(?,?);",
+        [username, password],
+        (err, results) => {
+          if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+            return res.json({
+              success: 0,
+              message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+            });
+          } else if (err) {
+            return res.status(200).json({
+              success: 0,
+              message: err.message,
+            });
+          }
+          const accessToken = jwt.sign(
+            {
+              id: results[0].a_id,
+            },
+            process.env.ACCESS_TOKEN_ADMIN,
+            { expiresIn: "300m" }
+          );
+          console.log(`Creating account for ${req.body.username}`);
+          return res.status(200).json({
+            success: 1,
+            id: results[0].a_id,
+            accessToken: accessToken,
+          });
+        }
       );
-
-      console.log(`Creating account for ${req.body.username}`);
-
-      return res.json({
-        success: 1,
-        username: req.body.username,
-        user_id: item._id,
-        accessToken: accessToken,
-      });
     } else {
       let { phone } = req.body;
-      const phoneExists = await User.findOne({ phone });
-      if (phoneExists) {
-        return res.status(200).json({
-          success: 0,
-          message: "Already exists!",
-        });
-      }
-
-      const item = await new User(req.body).save();
-
-      console.log(`Creating account for ${req.body.phone}`);
       const otp = generateOTP(6);
-
-      item.phoneOtp = otp;
-      await item.save();
-
-      return res.status(200).json({
-        success: 1,
-        otp: otp,
-        username: req.body.phone,
-        user_id: item._id,
-      });
+      db.query(
+        "call sp_create_user_account(?,?)",
+        [phone, otp],
+        (err, results) => {
+          if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+            return res.json({
+              success: 0,
+              message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+            });
+          } else if (err) {
+            return res.status(200).json({
+              success: 0,
+              message: err.message,
+            });
+          }
+          results = Object.values(JSON.parse(JSON.stringify(results)));
+          return res.status(200).json({
+            success: 1,
+            otp: otp,
+            phone: req.body.phone,
+            u_id: results[0].u_id,
+          });
+        }
+      );
     }
-    // message(user.phone, otp);
+    // message(phone, otp);
   }),
   login: asyncHandler(async (req, res) => {
     if (req.body.username && req.body.password) {
       let { username, password } = req.body;
-      if (empty(username) || empty(password))
-        throw new Error(
-          "Хэрэглэгчийн нэр эсвэл утасны дугаараа оруулна уу.!!!"
-        );
-      password = md5(password);
-      let item = await Admin.findOne({ username, password }).lean();
-      if (!item)
-        return res.json({
-          success: false,
-          message: "Хэрэглэгчийн нэр эсвэл нууц үг буруу байна",
-        });
-      const accessToken = jwt.sign(
-        {
-          ad_id: item._id,
-        },
-        process.env.ACCESS_TOKEN_ADMIN,
-        { expiresIn: "300m" }
+      db.query(
+        "call sp_login_admin(?,?)",
+        [username, password],
+        (err, results) => {
+          if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+            return res.json({
+              success: 0,
+              message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+            });
+          } else if (err) {
+            return res.status(200).json({
+              success: 0,
+              message: err.message,
+            });
+          }
+          results = Object.values(JSON.parse(JSON.stringify(results[0])));
+          const accessToken = jwt.sign(
+            {
+              ad_id: results[0].a_id,
+              username: username,
+            },
+            process.env.ACCESS_TOKEN_ADMIN,
+            { expiresIn: "300m" }
+          );
+          return res.json({
+            success: true,
+            ad_id: results[0].a_id,
+            username: req.body.username,
+            accessToken: accessToken,
+          });
+        }
       );
-
-      return res.json({
-        success: true,
-        user_id: item._id,
-        username: req.body.username,
-        accessToken: accessToken,
-        role: "toor",
-      });
     } else {
       const { phone } = req.body;
-      const user = await User.findOne({ phone }).lean();
-      let query;
-      let data = req.body;
-      // generate otp
       const otp = generateOTP(6);
-      data.phoneOtp = otp;
-      if (!user) {
-        query = new User(data).save();
-      } else {
-        query = User.findOneAndUpdate(
-          { phone },
-          { phoneOtp: otp, isAccountVerified: true }
-        );
-      }
-      const item = await query;
-      // message(phone, otp);
-      res.status(200).json({
-        success: true,
-        message: "Баталгаажуулах код бүртгэлтэй дугаарлуу илгээгдлээ",
-        data: {
-          userId: item._id,
-          otp: otp,
-        },
+      db.query("call sp_login_user(?,?)", [phone, otp], (err, results) => {
+        if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+          return res.json({
+            success: 0,
+            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+          });
+        } else if (err) {
+          return res.status(200).json({
+            success: 0,
+            message: err.message,
+          });
+        }
+
+        res.status(200).json({
+          success: true,
+          message: "Баталгаажуулах код бүртгэлтэй дугаарлуу илгээгдлээ",
+          data: {
+            phone: phone,
+            otp: otp,
+          },
+        });
       });
+      message(phone, otp);
     }
   }),
 
   verifyPhoneOtp: asyncHandler(async (req, res) => {
-    const { otp, phone } = req.body;
-    const user = await User.findOne({ phone });
-    if (!user) {
-      throw new Error("Мэдээлэл олдсонгүй !");
-    }
-    console.log(user.phoneOtp);
-    if (user.phoneOtp !== otp) {
-      throw new Error("Баталгаажуулах код буруу байна");
-    }
-    const accessToken = jwt.sign(
-      {
-        userId: req.body.user_id,
-      },
-      process.env.SECRET,
-      { expiresIn: "120m" }
-    );
+    let { phone, otp } = req.body;
+    db.query("call sp_verifyOtp(?,?) ", [phone, otp], (err, results) => {
+      if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+        return res.json({
+          success: 0,
+          message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+        });
+      } else if (err) {
+        return res.status(200).json({
+          success: 0,
+          message: err.message,
+        });
+      }
+      results = Object.values(JSON.parse(JSON.stringify(results[0])));
+      const accessToken = jwt.sign(
+        {
+          userId: results[0].u_id,
+        },
+        process.env.SECRET,
+        { expiresIn: "120m" }
+      );
 
-    res.status(200).json({
-      type: "success",
-      message: "OTP verified successfully",
-      data: {
-        accessToken,
-        userId: user._id,
-        role: user.role,
-      },
+      res.status(200).json({
+        type: "success",
+        message: "OTP verified successfully",
+        data: {
+          accessToken,
+          userId: results[0].u_id,
+        },
+      });
     });
-    user.phoneOtp = "";
-    await user.save();
   }),
   show: asyncHandler(async (req, res) => {
-    let item = await User.find().lean();
-    if (!item)
-      return res.json({ success: false, message: "Мэдээлэл олдсонгүй.!" });
-    return res.json({
-      success: true,
-      data: item,
+    db.query("select * from t_users ", [], (err, results) => {
+      if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+        return res.json({
+          success: 0,
+          message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+        });
+      } else if (err) {
+        return res.status(200).json({
+          success: 0,
+          message: err.message,
+        });
+      }
+      res.status(200).json({
+        success: 1,
+        data: results,
+      });
     });
   }),
   update: asyncHandler(async (req, res) => {

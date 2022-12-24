@@ -15,6 +15,6 @@ router.delete("/user/:id", delete_user);
 router.put("/user/:id", update);
 router.post("/login", login);
 router.post("/verify", verifyPhoneOtp);
-router.post("/check", auth, check);
+router.get("/me", auth, check);
 
 module.exports = router;

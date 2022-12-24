@@ -2,12 +2,9 @@ const jwt = require("jsonwebtoken");
 const empty = require("is-empty");
 const md5 = require("md5");
 const asyncHandler = require("../../../middleware/asyncHandler");
-const User = require("../../../models/users");
-const Admin = require("../../../models/admin");
-
+const db = require("../../db");
 function auth(req, res, next) {
   const header = req.headers["authorization"];
-  // console.log(req.headers)
   const token = header && header.split(" ")[1];
 
   if (token == null)
@@ -22,7 +19,6 @@ function auth(req, res, next) {
         success: 0,
         message: err.message,
       });
-    console.log("admin");
     req.data = data;
     next();
   });
