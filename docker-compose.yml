@@ -1,0 +1,46 @@
+version: '4.15'
+services:
+  db:
+    image: mysql:8.0
+    # platform: linux/amd64
+    command: mysql --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci --init-file /init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: &mysql_root_password ${MYSQL_ROOT_PASSWORD:-toor}
+      TZ: Asia/Ulaanbaatar
+    ports:
+      - '127.0.0.1:3307:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql:cached
+      - ./docker-compose/mysql/init.sql:/init.sql  
+    networks:
+      - wanpass_network
+  wanpass-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.development
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+    ports:
+      - '127.0.0.1:8000:8000' 
+      - '127.0.0.1:8001:8001' 
+      - '127.0.0.1:8002:8002' 
+      - '127.0.0.1:8003:8003' 
+      - '127.0.0.1:8004:8004' 
+    command: /bin/sh -c "yarn && yarn run dev"
+    volumes:
+      - .:/app:cached
+      - node_modules:/app/node_modules
+    depends_on:
+      - db
+    networks:
+      - wanpass_network
+networks:
+  wanpass_network:
+    driver: bridge
+    name: shared_wanpass_network
+volumes:
+  mysql_data:
+    driver: local
+  node_modules:
+    driver: local

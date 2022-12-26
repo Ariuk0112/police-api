@@ -101,11 +101,80 @@ module.exports = {
             }
         );
     }),
-    showAllEmp: asyncHandler(async (req, res, err) => {
+    showOneEmp: asyncHandler(async (req, res, err) => {
         if (!empty(req.params.id)) {
 
             db.query(
                 "select * from t_employee where emp_id = ?",
+                [req.params.id],
+
+                (err, results) => {
+                    if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                        return res.json({
+                            success: 0,
+                            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                        });
+                    } else if (err) {
+                        return res.status(200).json({
+                            success: 0,
+                            message: err.message,
+                        });
+                    }
+                    res.status(200).json({
+                        success: 1,
+                        message: "success",
+                        data: results,
+                    });
+                }
+            );
+        }
+        else {
+            res.status(501).json({
+                success: 0,
+                message: "id cannot be empty! "
+            });
+        }
+    }),
+
+    updateEmp: asyncHandler(async (req, res, err) => {
+        if (!empty(req.body.emp_id)) {
+            let { emp_f_name, emp_l_name, emp_position, emp_phone, emp_work_phone, emp_id } = req.body;
+            db.query(
+                "update t_employee set emp_f_name = ?, emp_l_name = ?, emp_position = ?, emp_phone = ?, emp_work_phone= ? where emp_id = ?",
+                [emp_f_name, emp_l_name, emp_position, emp_phone, emp_work_phone, emp_id],
+
+                (err, results) => {
+                    if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                        return res.json({
+                            success: 0,
+                            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                        });
+                    } else if (err) {
+                        return res.status(200).json({
+                            success: 0,
+                            message: err.message,
+                        });
+                    }
+                    res.status(200).json({
+                        success: 1,
+                        message: "success",
+                        data: results,
+                    });
+                }
+            );
+        }
+        else {
+            res.status(501).json({
+                success: 0,
+                message: "id cannot be empty! "
+            });
+        }
+    }),
+    deleteOneEmp: asyncHandler(async (req, res, err) => {
+        if (!empty(req.params.id)) {
+
+            db.query(
+                "delete from t_employee where emp_id = ?",
                 [req.params.id],
 
                 (err, results) => {

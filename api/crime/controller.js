@@ -520,5 +520,41 @@ module.exports = {
             }
         );
     }),
+    deleteSub: asyncHandler(async (req, res) => {
+        if (req.params.c_type_id) {
+            db.query(
+                "delete from t_crime_sub_type where c_sub_type_id = ?",
+                [req.params.c_type_id],
+                (err, results) => {
+                    if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                        return res.json({
+                            success: 0,
+                            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                        });
+                    } else if (err) {
+                        return res.status(200).json({
+                            success: 0,
+                            message: err.message,
+                        });
+                    }
+
+                    res.status(200).json({
+                        success: 1,
+                        message: "success",
+                        data: results,
+                    });
+
+
+                }
+            );
+        }
+        else {
+            res.status(501).json({
+                success: 0,
+                message: "id must be filled"
+            });
+
+        }
+    }),
 
 };

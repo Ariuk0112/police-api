@@ -1,22 +1,26 @@
 const fs = require("fs");
-const mongoose = require("mongoose");
 const colors = require("colors");
 require("dotenv").config();
 const { json } = require("express/lib/response");
-const creat = require("./models/product");
 
-mongoose.connect(process.env.MONGODB_URI, {});
-
-// const category = JSON.parse(
-//   fs.readFileSync(__dirname + "/data/subCategory.json", "utf-8")
-// );
+const db = require("./api/db");
+const path = require('path');
 const brand = JSON.parse(
   fs.readFileSync(__dirname + "/data/subCategory.json", "utf-8")
 );
 const importData = async () => {
   try {
-    await creat.create(brand);
-    console.log("Data imported success".green.inverse);
+
+    const create = fs.readFileSync(path.join(__dirname, '/database/create.sql')).toString();
+    const query = await db.query(create, (err, result) => {
+      if (err) {
+        throw err;
+      } else {
+
+        console.log("Data imported success".green.inverse);
+      }
+
+    });
   } catch (err) {
     console.log(err);
   }

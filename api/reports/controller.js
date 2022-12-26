@@ -100,7 +100,121 @@ module.exports = {
             }
         );
     }),
+    showcrimetype: asyncHandler(async (req, res, err) => {
+        db.query(
+            "select * from t_crime_type",
+            [],
+            (err, results) => {
+                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                    return res.json({
+                        success: 0,
+                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                    });
+                } else if (err) {
+                    return res.status(501).json({
+                        success: 0,
+                        message: err.message,
+                    });
+                }
 
+                res.status(200).json({
+                    success: 1,
+                    message: "success",
+                    data: results,
+                });
+            }
+        );
+    }),
+    createCrimeType: asyncHandler(async (req, res, err) => {
+        let type_name = req.body.type_name
+        db.query(
+            "insert into t_crime_type (type_name) values(?)",
+            [type_name],
+            (err, results) => {
+                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                    return res.json({
+                        success: 0,
+                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                    });
+                } else if (err) {
+                    return res.status(501).json({
+                        success: 0,
+                        message: err.message,
+                    });
+                }
+
+                res.status(200).json({
+                    success: 1,
+                    message: "success",
+                    data: results,
+                });
+            }
+        );
+    }),
+
+    deleteCrimeType: asyncHandler(async (req, res, err) => {
+        let c_type_id = req.params.c_type_id;
+        db.query(
+            "delete from t_crime_type where c_type_id = ?",
+            [c_type_id],
+            (err, results) => {
+                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                    return res.json({
+                        success: 0,
+                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                    });
+                } else if (err) {
+                    return res.status(501).json({
+                        success: 0,
+                        message: err.message,
+                    });
+                }
+                res.status(200).json({
+                    success: 1,
+                    message: "success",
+                    data: results,
+                });
+            }
+        );
+    }),
+    deleteReportType: asyncHandler(async (req, res, err) => {
+        let type_id = req.params.typeId;
+        db.query(
+            "delete from t_report_type where type_id = ?",
+            [type_id],
+            (err, results) => {
+                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                    return res.json({
+                        success: 0,
+                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                    });
+                } else if (err) {
+                    return res.status(501).json({
+                        success: 0,
+                        message: err.message,
+                    });
+                }
+
+                fs.unlink(
+                    `${process.env.MANAGEMENT_FILE_UPLOAD_PATH}/icon${type_id}`,
+                    (err) => {
+                        if (err) {
+                            throw new myError(
+                                "Файл устгах явцад алдаа гарлаа :" + err.message,
+                                400
+                            );
+                        }
+                    }
+                );
+
+                res.status(200).json({
+                    success: 1,
+                    message: "success",
+                    data: results,
+                });
+            }
+        );
+    }),
     showReportsWithtype: asyncHandler(async (req, res, err) => {
         let type_id = req.params.typeId;
         db.query(

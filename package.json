@@ -33,6 +33,7 @@
     "querystring": "^0.2.1",
     "read-excel-file": "^5.5.3",
     "request": "^2.88.2",
+    "run-my-sql-file": "^1.0.0",
     "socket.io": "^2.3.0",
     "superagent": "3.7.0",
     "transliteration": "^2.2.0",
