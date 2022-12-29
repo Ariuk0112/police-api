@@ -65,6 +65,7 @@ module.exports = {
                             message: uploadPath,
                         });
                     }
+
                     readXlsxFile(uploadPath).then((rows) => {
                         // `rows` is an array of rows
                         // each row being an array of cells.
@@ -76,6 +77,12 @@ module.exports = {
                                 id
                             ]
                         })
+                        rows.map(data => {
+                            db.query(
+                                "call sp_filter_imported_crimes(?)",
+                                [data[2]]
+                            );
+                        });
                         db.query(
                             "insert into t_crime (dep_name,c_type,c_sub_type_name,c_date,c_longitude,c_latitude,c_is_family_violence,last_updated_id) values ?",
                             [modifiedData],
@@ -103,6 +110,7 @@ module.exports = {
 
                             }
                         );
+
                         fs.unlink(
                             `${uploadPath}`,
                             (err) => {
@@ -124,8 +132,6 @@ module.exports = {
                             message: "aldaa garlaa dahin oroldnu1" + err,
                         });
                     })
-                    readXlsxFile
-
                 })
             );
         } else {
@@ -278,7 +284,7 @@ module.exports = {
         let type = req.query.type;
         if (type == "month") {
             db.query(
-                "select count(c_id) as count , t_crime_sub_type.* , t_report_type.* from t_crime inner join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name inner join t_report_type on t_report_type.type_id = t_crime_sub_type.type_id  WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) group by t_crime_sub_type.c_sub_type_name",
+                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id  WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) group by type_name order by count desc",
                 [],
 
                 (err, results) => {
@@ -304,7 +310,7 @@ module.exports = {
         }
         else if (type == 'season') {
             db.query(
-                "select count(c_id) as count , t_crime_sub_type.* , t_report_type.* from t_crime inner join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name inner join t_report_type on t_report_type.type_id = t_crime_sub_type.type_id  WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE - INTERVAL 3 MONTH) group by t_crime_sub_type.c_sub_type_name",
+                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE - INTERVAL 3 MONTH) group by type_name order by count desc;",
                 [],
 
                 (err, results) => {
@@ -330,7 +336,7 @@ module.exports = {
         }
         else if (type == 'year') {
             db.query(
-                "select count(c_id) as count , t_crime_sub_type.* , t_report_type.* from t_crime inner join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name inner join t_report_type on t_report_type.type_id = t_crime_sub_type.type_id  WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE - INTERVAL 1 YEAR) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE) group by t_crime_sub_type.c_sub_type_name",
+                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id  WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE - INTERVAL 1 YEAR) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE) group by type_name order by count desc;",
                 [],
 
                 (err, results) => {
@@ -356,7 +362,7 @@ module.exports = {
         }
         else if (empty(type)) {
             db.query(
-                "select count(c_id) as count , t_crime_sub_type.* , t_report_type.* from t_crime inner join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name inner join t_report_type on t_report_type.type_id = t_crime_sub_type.type_id  group by t_crime_sub_type.c_sub_type_name",
+                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id group by type_name order by count desc limit 4;",
                 [],
 
                 (err, results) => {
@@ -493,10 +499,37 @@ module.exports = {
     }),
 
     showSubtype: asyncHandler(async (req, res) => {
-
         db.query(
             "select * from t_crime_sub_type left join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id",
             [],
+            (err, results) => {
+                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                    return res.json({
+                        success: 0,
+                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                    });
+                } else if (err) {
+                    return res.status(200).json({
+                        success: 0,
+                        message: err.message,
+                    });
+                }
+
+                res.status(200).json({
+                    success: 1,
+                    message: "success",
+                    data: results,
+                });
+
+
+            }
+        );
+    }),
+    updateCrimeType: asyncHandler(async (req, res) => {
+        let { c_sub_type_name, type_id, c_sub_type_id } = req.body;
+        db.query(
+            "update t_crime_sub_type set c_sub_type_name=? , type_id = ? where c_sub_type_id=?",
+            [c_sub_type_name, type_id, c_sub_type_id],
             (err, results) => {
                 if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
                     return res.json({

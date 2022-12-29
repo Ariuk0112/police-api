@@ -1,4 +1,4 @@
-DELIMITER //CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_create_admin_account`(
+DELIMITER $$CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_create_admin_account`(
 	pi_username nvarchar(100),
     pi_passhash nvarchar(100)
 )
@@ -26,7 +26,7 @@ end if;
 insert into t_admins ( a_username, a_password )
 values ( lower(pi_username), sha2(pi_passhash, 256));
 SELECT MAX(a_id) AS a_id FROM t_admins;
-end//DELIMITER ;
+end$$DELIMITER ;
 
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_child_delete_sub_cat`(
