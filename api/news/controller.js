@@ -272,76 +272,277 @@ module.exports = {
 
   showNewsWithSubCat: asyncHandler(async (req, res) => {
     let sub_cat_id = req.params.sub_cat_id;
-    db.query(
-      "select n_id from t_news inner join t_sub_category on t_news.sub_cat_id =t_sub_category.sub_cat_id where t_sub_category.sub_cat_id = ?; ",
-      [sub_cat_id],
-      (err, results) => {
-        if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-          return res.json({
-            success: 0,
-            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-          });
-        } else if (err) {
-          return res.status(200).json({
-            success: 0,
-            message: err.message,
-          });
-        }
-
-        total = results.length;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const sort = req.query.sort;
-
-        ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
-
-        const pageCount = Math.ceil(total / limit);
-        const start = (page - 1) * limit + 1;
-        let end = start + limit - 1;
-        let skip = start;
-        if (end > total) end = total;
-
-        const pagination = { total, pageCount, start, end };
-
-        if (page < pageCount) pagination.nextPage = page + 1;
-        if (page > 1) pagination.prevPage = page - 1;
-
-        results = Object.values(JSON.parse(JSON.stringify(results)));
-        console.log(results);
-        db.query(
-          "call sp_filter_news_sub_cat_id(?,?,?,?)",
-          [sub_cat_id, skip, limit, sort],
-          (err, result) => {
-            if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-              return res.json({
-                success: 0,
-                message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-              });
-            } else if (err) {
-              return res.status(200).json({
-                success: 0,
-                message: err.message,
-              });
-            }
-            result = Object.values(JSON.parse(JSON.stringify(result[0])));
-
-            res.status(200).json({
-              success: 1,
-              message: "success",
-              pagination,
-              data: result,
+    if (req.query.startDate && req.query.endDate) {
+      let startDate = req.query.startDate;
+      let endDate = req.query.endDate;
+      db.query(
+        "select n_id from t_news inner join t_sub_category on t_news.sub_cat_id =t_sub_category.sub_cat_id where t_sub_category.sub_cat_id = ?  and t_news.createdAt between ? and ?; ",
+        [sub_cat_id, startDate, endDate],
+        (err, results) => {
+          if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+            return res.json({
+              success: 0,
+              message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+            });
+          } else if (err) {
+            return res.status(200).json({
+              success: 0,
+              message: err.message,
             });
           }
-        );
-      }
-    );
+
+          total = results.length;
+          const page = parseInt(req.query.page) || 1;
+          const limit = parseInt(req.query.limit) || 10;
+          const sort = req.query.sort;
+
+          ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
+
+          const pageCount = Math.ceil(total / limit);
+          const start = (page - 1) * limit + 1;
+          let end = start + limit - 1;
+          let skip = start - 1;
+          if (end > total) end = total;
+
+          const pagination = { total, pageCount, start, end };
+
+          if (page < pageCount) pagination.nextPage = page + 1;
+          if (page > 1) pagination.prevPage = page - 1;
+
+          results = Object.values(JSON.parse(JSON.stringify(results)));
+          console.log(results);
+          db.query(
+            "select n_id from t_news inner join t_sub_category on t_news.sub_cat_id =t_sub_category.sub_cat_id where t_sub_category.sub_cat_id = ?  and t_news.createdAt between ? and ? order by createdAt desc limit ?,?;",
+            [sub_cat_id, startDate, endDate, skip, limit],
+            (err, result) => {
+              if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                return res.json({
+                  success: 0,
+                  message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                });
+              } else if (err) {
+                return res.status(200).json({
+                  success: 0,
+                  message: err.message,
+                });
+              }
+              result = Object.values(JSON.parse(JSON.stringify(result[0])));
+
+              res.status(200).json({
+                success: 1,
+                message: "success",
+                pagination,
+                data: result,
+              });
+            }
+          );
+        }
+      );
+    }
+    else {
+      db.query(
+        "select n_id from t_news inner join t_sub_category on t_news.sub_cat_id =t_sub_category.sub_cat_id where t_sub_category.sub_cat_id = ?; ",
+        [sub_cat_id],
+        (err, results) => {
+          if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+            return res.json({
+              success: 0,
+              message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+            });
+          } else if (err) {
+            return res.status(200).json({
+              success: 0,
+              message: err.message,
+            });
+          }
+
+          total = results.length;
+          const page = parseInt(req.query.page) || 1;
+          const limit = parseInt(req.query.limit) || 10;
+          const sort = req.query.sort;
+
+          ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
+
+          const pageCount = Math.ceil(total / limit);
+          const start = (page - 1) * limit + 1;
+          let end = start + limit - 1;
+          let skip = start;
+          if (end > total) end = total;
+
+          const pagination = { total, pageCount, start, end };
+
+          if (page < pageCount) pagination.nextPage = page + 1;
+          if (page > 1) pagination.prevPage = page - 1;
+
+          results = Object.values(JSON.parse(JSON.stringify(results)));
+          console.log(results);
+          db.query(
+            "call sp_filter_news_sub_cat_id(?,?,?,?)",
+            [sub_cat_id, skip, limit, sort],
+            (err, result) => {
+              if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                return res.json({
+                  success: 0,
+                  message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                });
+              } else if (err) {
+                return res.status(200).json({
+                  success: 0,
+                  message: err.message,
+                });
+              }
+              result = Object.values(JSON.parse(JSON.stringify(result[0])));
+
+              res.status(200).json({
+                success: 1,
+                message: "success",
+                pagination,
+                data: result,
+              });
+            }
+          );
+        }
+      );
+    }
   }),
 
   showNewsWithCat: asyncHandler(async (req, res) => {
     let cat_id = req.params.cat_id;
+    if (req.query.startDate && req.query.endDate) {
+      let startDate = req.query.startDate;
+      let endDate = req.query.endDate;
+      db.query(
+        "select n_id from t_news inner join t_sub_category on t_news.sub_cat_id = t_sub_category.sub_cat_id inner join t_category on t_sub_category.cat_id = t_category.cat_id where t_category.cat_id = ? and t_news.createdAt between ? and ?;",
+        [cat_id, startDate, endDate],
+        (err, results) => {
+          if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+            return res.json({
+              success: 0,
+              message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+            });
+          } else if (err) {
+            return res.status(200).json({
+              success: 0,
+              message: err.message,
+            });
+          }
+
+          total = results.length;
+          const page = parseInt(req.query.page) || 1;
+          const limit = parseInt(req.query.limit) || 10;
+          const sort = req.query.sort;
+
+          ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
+
+          const pageCount = Math.ceil(total / limit);
+          const start = (page - 1) * limit + 1;
+          let end = start + limit - 1;
+          let skip = start - 1;
+          if (end > total) end = total;
+
+          const pagination = { total, pageCount, start, end };
+
+          if (page < pageCount) pagination.nextPage = page + 1;
+          if (page > 1) pagination.prevPage = page - 1;
+
+          db.query(
+            "select * from t_news inner join t_sub_category on t_news.sub_cat_id = t_sub_category.sub_cat_id inner join t_category on t_sub_category.cat_id = t_category.cat_id where t_category.cat_id = ? and t_news.createdAt between ? and ? order by createdAt desc limit ?,? ;",
+            [cat_id, startDate, endDate, skip, limit],
+            (err, result) => {
+              if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                return res.json({
+                  success: 0,
+                  message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                });
+              } else if (err) {
+                return res.status(200).json({
+                  success: 0,
+                  message: err.message,
+                });
+              }
+              result = Object.values(JSON.parse(JSON.stringify(result)));
+
+              res.status(200).json({
+                success: 1,
+                message: "success",
+                pagination,
+                data: result,
+              });
+            }
+          );
+        }
+      );
+    }
+    else {
+      db.query(
+        "select n_id from t_news inner join t_sub_category on t_news.sub_cat_id = t_sub_category.sub_cat_id inner join t_category on t_sub_category.cat_id = t_category.cat_id where t_category.cat_id = ?;",
+        [cat_id],
+        (err, results) => {
+          if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+            return res.json({
+              success: 0,
+              message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+            });
+          } else if (err) {
+            return res.status(200).json({
+              success: 0,
+              message: err.message,
+            });
+          }
+
+          total = results.length;
+          const page = parseInt(req.query.page) || 1;
+          const limit = parseInt(req.query.limit) || 10;
+          const sort = req.query.sort;
+
+          ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
+
+          const pageCount = Math.ceil(total / limit);
+          const start = (page - 1) * limit + 1;
+          let end = start + limit - 1;
+          let skip = start;
+          if (end > total) end = total;
+
+          const pagination = { total, pageCount, start, end };
+
+          if (page < pageCount) pagination.nextPage = page + 1;
+          if (page > 1) pagination.prevPage = page - 1;
+
+          db.query(
+            "call sp_filter_news_cat_id(?,?,?,?)",
+            [cat_id, skip, limit, sort],
+            (err, result) => {
+              if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                return res.json({
+                  success: 0,
+                  message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                });
+              } else if (err) {
+                return res.status(200).json({
+                  success: 0,
+                  message: err.message,
+                });
+              }
+              result = Object.values(JSON.parse(JSON.stringify(result[0])));
+
+              res.status(200).json({
+                success: 1,
+                message: "success",
+                pagination,
+                data: result,
+              });
+            }
+          );
+        }
+      );
+    }
+  }),
+
+  searchNews: asyncHandler(async (req, res) => {
+    let text = '%' + req.query.text + '%';
     db.query(
-      "select n_id from t_news inner join t_sub_category on t_news.sub_cat_id = t_sub_category.sub_cat_id inner join t_category on t_sub_category.cat_id = t_category.cat_id where t_category.cat_id = ?;",
-      [cat_id],
+      "SELECT n_id FROM t_news where n_title like ?;",
+      [text],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
           return res.json({
@@ -357,7 +558,7 @@ module.exports = {
 
         total = results.length;
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || 20;
         const sort = req.query.sort;
 
         ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
@@ -365,7 +566,8 @@ module.exports = {
         const pageCount = Math.ceil(total / limit);
         const start = (page - 1) * limit + 1;
         let end = start + limit - 1;
-        let skip = start;
+        let skip = start - 1;
+        console.log(limit);
         if (end > total) end = total;
 
         const pagination = { total, pageCount, start, end };
@@ -374,8 +576,8 @@ module.exports = {
         if (page > 1) pagination.prevPage = page - 1;
 
         db.query(
-          "call sp_filter_news_cat_id(?,?,?,?)",
-          [cat_id, skip, limit, sort],
+          "SELECT * FROM t_news where n_title like ? order by createdAt desc limit ?,? ",
+          [text, skip, limit],
           (err, result) => {
             if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
               return res.json({
@@ -388,8 +590,9 @@ module.exports = {
                 message: err.message,
               });
             }
-            result = Object.values(JSON.parse(JSON.stringify(result[0])));
+            result = Object.values(JSON.parse(JSON.stringify(result)));
 
+            console.log(result);
             res.status(200).json({
               success: 1,
               message: "success",

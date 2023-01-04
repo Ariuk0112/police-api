@@ -7,8 +7,10 @@ const {
   deleteNews,
   showNewsWithSubCat,
   showNewsWithCat,
+  searchNews,
 } = require("./controller");
 
+router.get("/search", searchNews);
 router.get("/", showAllNews);
 router.post("/", createNews);
 router.get("/:id", showOneNews);
