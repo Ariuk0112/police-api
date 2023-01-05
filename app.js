@@ -32,7 +32,6 @@ app.use(express.static("./public"));
 // content-type: application/json
 // date: Wed, 27 Apr 2022 14:37:36 GMT
 // strict-transport-security: max-age=15724800; includeSubDomains
-const { authAdmin } = require("./api/admin/auth/controller");
 const issue2options = {
   origin: "*",
   methods: ["POST", "PUT", "GET", "DELETE", "OPTIONS", "HEAD"],

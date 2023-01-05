@@ -1,4 +1,6 @@
 const router = require("express").Router();
+const { auth } = require("../auth/controller");
+
 const {
   showAllOptions,
   createFeedback,
@@ -7,8 +9,8 @@ const {
   updateOption,
 } = require("./controller");
 router.get("/", showAllOptions);
-router.post("/", createFeedback);
+router.post("/", auth, createFeedback);
 router.post("/submit", submitFeedback);
-router.put("/", updateOption);
-router.delete("/:id", deleteFeedback);
+router.put("/", auth, updateOption);
+router.delete("/:id", auth, deleteFeedback);
 module.exports = router;

@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const { auth } = require("../auth/controller");
 const {
   createCategory,
   showAllCategory,
@@ -10,15 +11,15 @@ const {
   deleteSubCategory,
   showSubCategoryWithCatId,
 } = require("./controller");
-router.post("/", createCategory);
-router.put("/", updateCategory);
+router.post("/", auth, createCategory);
+router.put("/", auth, updateCategory);
 router.get("/", showAllCategory);
 router.get("/:id", showSubCategoryWithCatId);
-router.delete("/:id", deleteCategory);
+router.delete("/:id", auth, deleteCategory);
 
-router.post("/subCategory", createSubCategory);
-router.put("/subCategory", updateSubCategory);
+router.post("/subCategory", auth, createSubCategory);
+router.put("/subCategory", auth, updateSubCategory);
 router.get("/subCategory", showSubCategory);
-router.delete("/subCategory/:id", deleteSubCategory);
+router.delete("/subCategory/:id", auth, deleteSubCategory);
 
 module.exports = router;

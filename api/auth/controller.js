@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const mail = require("../mail");
 const { generateOTP, message } = require("../../utils/otp.util");
 const empty = require("is-empty");
 const md5 = require("md5");
