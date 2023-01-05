@@ -303,7 +303,7 @@ module.exports = {
     }),
     showAllReports: asyncHandler(async (req, res, err) => {
         db.query(
-            "select r_id from t_user_reports where t_status = 0",
+            "select r_id from t_user_reports where t_status = 0 order by createdAt desc",
             [],
             (err, results) => {
                 if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
@@ -368,7 +368,7 @@ module.exports = {
     filterReports: asyncHandler(async (req, res, err) => {
         let typeId = req.params.typeId;
         db.query(
-            "SELECT r_id FROM data_police.t_user_reports left join t_report_type on t_user_reports.type_id = t_report_type.type_id where t_user_reports.t_status and t_report_type.type_id = ?",
+            "SELECT r_id FROM data_police.t_user_reports left join t_report_type on t_user_reports.type_id = t_report_type.type_id where t_user_reports.t_status and t_report_type.type_id = ? order by createdAt desc",
             [typeId],
             (err, results) => {
                 if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {

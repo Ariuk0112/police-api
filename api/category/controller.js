@@ -32,7 +32,7 @@ module.exports = {
 
   showAllCategory: asyncHandler(async (req, res) => {
     db.query(
-      "  select t_category.* , group_concat(t_sub_category.sub_cat_name) as sub_cat_name, group_concat(t_sub_category.sub_cat_name_en) as sub_cat_name_en,group_concat(t_sub_category.sub_cat_id)    as sub_cat_id from t_category   left join t_sub_category on t_sub_category.cat_id = t_category.cat_id group by t_category.cat_id;",
+      "select t_category.* , group_concat(t_sub_category.sub_cat_name) as sub_cat_name, group_concat(t_sub_category.sub_cat_name_en) as sub_cat_name_en,group_concat(t_sub_category.sub_cat_id) as sub_cat_id ,group_concat(ifnull(concat(t_sub_category.sub_cat_link),'')) as sub_cat_link from t_category  left join t_sub_category on t_sub_category.cat_id = t_category.cat_id group by t_category.cat_id ",
       [],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
