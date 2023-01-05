@@ -129,10 +129,10 @@ module.exports = {
   }),
 
   createSubCategory: asyncHandler(async (req, res) => {
-    let { cat_id, sub_cat_name, sub_cat_name_en } = req.body;
+    let { cat_id, sub_cat_name, sub_cat_name_en, sub_cat_link } = req.body;
     db.query(
-      "call sp_create_sub_cat(?,?,?);",
-      [cat_id, sub_cat_name, sub_cat_name_en],
+      "call sp_create_sub_cat(?,?,?,?);",
+      [cat_id, sub_cat_name, sub_cat_name_en, sub_cat_link],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
           return res.json({
