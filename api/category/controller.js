@@ -57,7 +57,7 @@ module.exports = {
 
   showSubCategoryWithCatId: asyncHandler(async (req, res) => {
     db.query(
-      "select cat_name , cat_name_en , sub_cat_id , sub_cat_name,sub_cat_name_en from t_category inner join t_sub_category on t_category.cat_id = t_sub_category.cat_id where t_sub_category.cat_id = ?;",
+      "select cat_name , cat_name_en , sub_cat_id , sub_cat_name,sub_cat_name_en,sub_cat_link from t_category inner join t_sub_category on t_category.cat_id = t_sub_category.cat_id where t_sub_category.cat_id = ?;",
       [req.params.id],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
