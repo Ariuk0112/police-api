@@ -8,22 +8,28 @@ const myError = require("../../utils/myError");
 
 module.exports = {
   createNews: asyncHandler(async (req, res) => {
-    let { n_img, n_title, n_desc, n_files, n_content, child_sub_cat_id } =
+    let { n_img, n_title, n_desc, n_files, n_content, child_sub_cat_id, n_video_link } =
       req.body;
-    if (req.files.n_img) {
-      n_img = "img.png";
-    } else {
-      n_img = "no-photo.png";
+    if (req.files) {
+      if (req.files.n_img) {
+        n_img = "img.png";
+      } else {
+        n_img = "no-photo.png";
+      }
+      if (req.files.n_files) {
+        n_files = "file.pdf";
+      } else {
+        n_files = "no-files";
+      }
     }
-    if (req.files.n_files) {
-      n_files = "file.ext";
-    } else {
-      n_files = "no-files";
+    else {
+      n_img = " ";
     }
 
+
     db.query(
-      "call sp_create_news(?,?,?,?,?,?) ",
-      [n_img, n_title, n_desc, n_content, n_files, child_sub_cat_id],
+      "call sp_create_news(?,?,?,?,?,?,?) ",
+      [n_img, n_title, n_desc, n_content, n_files, child_sub_cat_id, n_video_link],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
           return res.json({
@@ -38,60 +44,70 @@ module.exports = {
         }
 
         results = Object.values(JSON.parse(JSON.stringify(results[0])));
-        if (req.files.n_img) {
-          n_img = req.files.n_img;
-          n_img.name = `/uploads/news/photo_${results[0].n_id}${path.parse(n_img.name).ext
-            }`;
-          str = n_img.name.split("/").pop();
-          n_img.mv(`${process.env.NEWS_FILE_UPLOAD_PATH}/${str}`, (err) => {
-            if (err) {
-              throw new myError(
-                "Файл хуулах явцад алдаа гарлаа :" + err.message,
-                400
-              );
-            }
-          });
-          n_img = n_img.name;
-        }
-
-        if (req.files.n_files) {
-          n_files = req.files.n_files;
-          n_files.name = `/uploads/news/files_${results[0].n_id}${path.parse(n_files.name).ext
-            }`;
-          str = n_files.name.split("/").pop();
-          n_files.mv(`${process.env.NEWS_FILE_UPLOAD_PATH}/${str}`, (err) => {
-            if (err) {
-              throw new myError(
-                "Файл хуулах явцад алдаа гарлаа :" + err.message,
-                400
-              );
-            }
-          });
-          n_files = n_files.name;
-        }
-        db.query(
-          "call sp_insert_news_img(?,?,?)",
-          [results[0].n_id, n_img, n_files],
-          (err, result) => {
-            if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-              return res.json({
-                success: 0,
-                message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-              });
-            } else if (err) {
-              return res.status(200).json({
-                success: 0,
-                message: err.message,
-              });
-            }
-
-            res.status(200).json({
-              success: 1,
-              message: "success",
-              data: result,
+        if (req.files) {
+          if (req.files.n_img) {
+            n_img = req.files.n_img;
+            n_img.name = `/uploads/news/photo_${results[0].n_id}${path.parse(n_img.name).ext
+              }`;
+            str = n_img.name.split("/").pop();
+            n_img.mv(`${process.env.NEWS_FILE_UPLOAD_PATH}/${str}`, (err) => {
+              if (err) {
+                throw new myError(
+                  "Файл хуулах явцад алдаа гарлаа :" + err.message,
+                  400
+                );
+              }
             });
+            n_img = n_img.name;
           }
-        );
+
+          if (req.files.n_files) {
+            n_files = req.files.n_files;
+            n_files.name = `/uploads/news/files_${results[0].n_id}${path.parse(n_files.name).ext
+              }`;
+            str = n_files.name.split("/").pop();
+            n_files.mv(`${process.env.NEWS_FILE_UPLOAD_PATH}/${str}`, (err) => {
+              if (err) {
+                throw new myError(
+                  "Файл хуулах явцад алдаа гарлаа :" + err.message,
+                  400
+                );
+              }
+            });
+            n_files = n_files.name;
+          }
+          db.query(
+            "call sp_insert_news_img(?,?,?)",
+            [results[0].n_id, n_img, n_files],
+            (err, result) => {
+              if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                return res.json({
+                  success: 0,
+                  message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                });
+              } else if (err) {
+                return res.status(200).json({
+                  success: 0,
+                  message: err.message,
+                });
+              }
+
+              res.status(200).json({
+                success: 1,
+                message: "success",
+                data: result,
+              });
+            }
+          );
+        }
+        else {
+          res.status(200).json({
+            success: 1,
+            message: "success",
+            data: results,
+          });
+        }
+
       }
     );
   }),
@@ -147,6 +163,71 @@ module.exports = {
           message: "success",
           data: results,
         });
+      }
+    );
+  }),
+  showVideoNews: asyncHandler(async (req, res) => {
+
+    db.query(
+      "SELECT n_id FROM t_news where n_video_link is not null order by createdAt desc;",
+      [],
+      (err, results) => {
+        if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+          return res.json({
+            success: 0,
+            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+          });
+        } else if (err) {
+          return res.status(200).json({
+            success: 0,
+            message: err.message,
+          });
+        }
+        total = results.length;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const sort = req.query.sort;
+
+        ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
+
+        const pageCount = Math.ceil(total / limit);
+        const start = (page - 1) * limit + 1;
+        let end = start + limit - 1;
+        let skip = start - 1;
+        console.log(limit);
+        if (end > total) end = total;
+
+        const pagination = { total, pageCount, start, end };
+
+        if (page < pageCount) pagination.nextPage = page + 1;
+        if (page > 1) pagination.prevPage = page - 1;
+
+        db.query(
+          "SELECT * FROM t_news where n_video_link is not null order by createdAt desc limit ?,? ",
+          [skip, limit],
+          (err, result) => {
+            if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+              return res.json({
+                success: 0,
+                message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+              });
+            } else if (err) {
+              return res.status(200).json({
+                success: 0,
+                message: err.message,
+              });
+            }
+            result = Object.values(JSON.parse(JSON.stringify(result)));
+
+            console.log(result);
+            res.status(200).json({
+              success: 1,
+              message: "success",
+              pagination,
+              data: result,
+            });
+          }
+        );
       }
     );
   }),

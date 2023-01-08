@@ -76,7 +76,7 @@ module.exports = {
   updateManTeam: asyncHandler(async (req, res) => {
     let { man_lastName, man_firstName, man_position, man_id } = req.body;
     let man_img;
-    if (req.files.man_img) {
+    if (req.files) {
       man_img = req.files.man_img;
       man_img.name = `/uploads/management/photo_${req.body.man_id}${path.parse(man_img.name).ext
         }`;

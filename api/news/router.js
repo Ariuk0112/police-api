@@ -9,11 +9,13 @@ const {
   showNewsWithSubCat,
   showNewsWithCat,
   searchNews,
+  showVideoNews,
 } = require("./controller");
 
 router.get("/search", searchNews);
 router.get("/", showAllNews);
 router.post("/", auth, createNews);
+router.get("/video", showVideoNews);
 router.get("/:id", showOneNews);
 router.put("/", auth, updateNews);
 router.delete("/:id", auth, deleteNews);
