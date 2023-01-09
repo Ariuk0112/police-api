@@ -143,7 +143,7 @@ module.exports = {
     const n_id = req.params.id;
     console.log(n_id);
     db.query(
-      "select n_id, n_img, n_title, n_desc, n_content, n_viewcount, createdAt ,sub_cat_name ,cat_name from t_news inner join  t_sub_category on t_news.sub_cat_id =t_sub_category.sub_cat_id inner join t_category on t_category.cat_id =t_sub_category.cat_id where t_news.n_id = ? ",
+      "select n_id, n_img, n_title, n_desc, n_content, n_viewcount, createdAt ,sub_cat_name ,cat_name ,n_video_link from t_news inner join  t_sub_category on t_news.sub_cat_id =t_sub_category.sub_cat_id inner join t_category on t_category.cat_id =t_sub_category.cat_id where t_news.n_id = ? ",
       [n_id],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
@@ -254,6 +254,9 @@ module.exports = {
       }
       else {
         n_img = req.body.n_img;
+        if (empty(n_img)) {
+          n_files = ""
+        }
       }
       if (req.files.n_files) {
         n_files = req.files.n_files;
@@ -274,19 +277,28 @@ module.exports = {
       }
       else {
         n_files = req.body.n_files;
+        if (empty(n_files)) {
+          n_files = "no-files"
+        }
       }
 
     }
     else {
       n_img = req.body.n_img;
       n_files = req.body.n_files;
+      if (empty(n_files)) {
+        n_files = "no-files"
+      }
+      if (empty(n_img)) {
+        n_img = " "
+      }
     }
 
 
     let { n_id, n_title, n_desc, n_content, sub_cat_id, n_video_link } = req.body;
-    console.log(n_img, n_title, n_desc, n_content, sub_cat_id, n_files);
+    console.log(n_id, n_img, n_title, n_desc, n_content, sub_cat_id, n_files, n_video_link);
     db.query(
-      "call sp_update_news(?,?,?,?,?,?,?) ",
+      "call sp_update_news(?,?,?,?,?,?,?,?) ",
       [n_id, n_img, n_title, n_desc, n_content, sub_cat_id, n_files, n_video_link],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {

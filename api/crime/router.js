@@ -11,6 +11,6 @@ router.delete("/type/:c_type_id", auth, deleteSub);
 router.get("/type", showSubtype);
 router.put("/type", auth, updateCrimeType);
 
-router.get("/filter/sub", getCrimeList_subtype);
-router.get("/filter/type", getCrimeList_type);
+router.post("/filter/sub", getCrimeList_subtype);
+router.post("/filter/type", getCrimeList_type);
 module.exports = router;
