@@ -9,11 +9,11 @@ const readXlsxFile = require('read-excel-file/node');
 
 module.exports = {
     createDep: asyncHandler(async (req, res, err) => {
-        let dep_name = req.body.dep_name;
+        let { dep_name, dep_link } = req.body;
         console.log(req.body.dep_name);
         db.query(
-            "insert into t_department(dep_name) values (?)",
-            [dep_name],
+            "insert into t_department(dep_name,dep_link) values (?,?)",
+            [dep_name, dep_link],
             (err, results) => {
                 if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
                     return res.json({
@@ -38,7 +38,7 @@ module.exports = {
 
     showDep: asyncHandler(async (req, res, err) => {
         db.query(
-            "select * from t_department",
+            "select dep_id from t_department",
             [],
             (err, results) => {
                 if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
@@ -52,12 +52,51 @@ module.exports = {
                         message: err.message,
                     });
                 }
+                total = results.length;
+                const page = parseInt(req.query.page) || 1;
+                const limit = parseInt(req.query.limit) || 20;
+                const sort = req.query.sort;
 
-                res.status(200).json({
-                    success: 1,
-                    message: "success",
-                    data: results,
-                });
+                ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
+
+                const pageCount = Math.ceil(total / limit);
+                const start = (page - 1) * limit + 1;
+                let end = start + limit - 1;
+                let skip = start - 1;
+                if (end > total) end = total;
+
+                const pagination = { total, pageCount, start, end };
+
+                if (page < pageCount) pagination.nextPage = page + 1;
+                if (page > 1) pagination.prevPage = page - 1;
+
+                db.query(
+                    "select * from t_department limit ?,? ",
+                    [skip, limit],
+                    (err, result) => {
+                        if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                            return res.json({
+                                success: 0,
+                                message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                            });
+                        } else if (err) {
+                            return res.status(200).json({
+                                success: 0,
+                                message: err.message,
+                            });
+                        }
+                        result = Object.values(JSON.parse(JSON.stringify(result)));
+
+                        console.log(result);
+                        res.status(200).json({
+                            success: 1,
+                            message: "success",
+                            pagination,
+                            data: result,
+                        });
+                    }
+                );
+
             }
         );
     }),
@@ -97,10 +136,10 @@ module.exports = {
     }),
 
     updateDep: asyncHandler(async (req, res, err) => {
-        let { dep_id, dep_name } = req.body
+        let { dep_id, dep_name, dep_link } = req.body
         db.query(
-            "update t_department set dep_name where dep_id = ?",
-            [dep_id, dep_name],
+            "update t_department set dep_name=? , dep_link = ? where dep_id = ?",
+            [dep_name, dep_link, dep_id],
             (err, results) => {
                 if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
                     return res.json({

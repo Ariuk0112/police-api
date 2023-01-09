@@ -283,11 +283,11 @@ module.exports = {
     }
 
 
-    let { n_id, n_title, n_desc, n_content, sub_cat_id } = req.body;
+    let { n_id, n_title, n_desc, n_content, sub_cat_id, n_video_link } = req.body;
     console.log(n_img, n_title, n_desc, n_content, sub_cat_id, n_files);
     db.query(
       "call sp_update_news(?,?,?,?,?,?,?) ",
-      [n_id, n_img, n_title, n_desc, n_content, sub_cat_id, n_files],
+      [n_id, n_img, n_title, n_desc, n_content, sub_cat_id, n_files, n_video_link],
       (err, results) => {
         if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
           return res.json({
