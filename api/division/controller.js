@@ -120,7 +120,7 @@ module.exports = {
                 const pageCount = Math.ceil(total / limit);
                 const start = (page - 1) * limit + 1;
                 let end = start + limit - 1;
-                let skip = start;
+                let skip = start - 1;
                 if (end > total) end = total;
 
                 const pagination = { total, pageCount, start, end };
@@ -128,7 +128,6 @@ module.exports = {
                 if (page < pageCount) pagination.nextPage = page + 1;
                 if (page > 1) pagination.prevPage = page - 1;
 
-                results = Object.values(JSON.parse(JSON.stringify(results)));
                 db.query(
                     "select * from t_division limit ?,?",
                     [skip, limit],
@@ -144,8 +143,7 @@ module.exports = {
                                 message: err.message,
                             });
                         }
-                        result = Object.values(JSON.parse(JSON.stringify(result[0])));
-
+                        console.log(result);
                         res.status(200).json({
                             success: 1,
                             message: "success",
@@ -159,7 +157,7 @@ module.exports = {
     }),
 
     getDivTabById: asyncHandler(async (req, res, err) => {
-        let d_id = req.query.id;
+        let d_id = req.params.id;
         if (empty(d_id)) {
             res.status(501).json({
                 success: 0,
@@ -196,7 +194,7 @@ module.exports = {
     }),
 
     deleteDiv: asyncHandler(async (req, res) => {
-        let d_id = req.query.id;
+        let d_id = req.params.id;
 
         db.query(
             "delete from t_division where d_id = ?",
@@ -223,7 +221,7 @@ module.exports = {
         );
     }),
     deleteDivTab: asyncHandler(async (req, res) => {
-        let d_id = req.query.id;
+        let d_id = req.params.id;
         db.query(
             "delete from t_division where d_id = ?",
             [d_id],

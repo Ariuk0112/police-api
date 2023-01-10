@@ -71,6 +71,7 @@ app.use("/api/department", require("./api/departments/router"));
 app.use("/api/faq", require("./api/faq/router"));
 app.use("/api/emp", require("./api/employee/router"));
 app.use("/api/banner", require("./api/banner/router"));
+app.use("/api/division", require("./api/division/router"));
 
 // ADMIN routes
 
