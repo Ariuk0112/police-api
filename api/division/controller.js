@@ -248,170 +248,25 @@ module.exports = {
             }
         );
     }),
-
-    getCrimeList_subtype: asyncHandler(async (req, res, err) => {
-        sub_type = req.body.sub_type;
-        if (empty(sub_type)) {
-            res.status(501).json({
+    update_division: asyncHandler(async (req, res, err) => {
+        if (empty(req.body.d_name)) {
+            res.status(200).json({
                 success: 0,
-                message: "type cannot be empty!",
+                message: "d_name cannot be empty",
+            });
+        }
+        if (empty(req.body.d_id)) {
+            res.status(200).json({
+                success: 0,
+                message: "d_id cannot be empty",
             });
         }
         else {
+            let { d_name, d_id } = req.body;
+
             db.query(
-                "select c_id from t_crime where c_sub_type_name = ?",
-                [sub_type],
-                (err, results) => {
-                    if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-                        return res.json({
-                            success: 0,
-                            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-                        });
-                    } else if (err) {
-                        return res.status(200).json({
-                            success: 0,
-                            message: err.message,
-                        });
-                    }
-                    total = results.length;
-                    const page = parseInt(req.query.page) || 1;
-                    const limit = parseInt(req.query.limit) || 100;
-                    const sort = req.query.sort;
-
-                    ["sort", "page", "limit"].forEach((el) => delete req.query[el]);
-
-                    const pageCount = Math.ceil(total / limit);
-                    const start = (page - 1) * limit + 1;
-                    let end = start + limit - 1;
-                    let skip = start;
-                    if (end > total) end = total;
-
-                    const pagination = { total, pageCount, start, end };
-
-                    if (page < pageCount) pagination.nextPage = page + 1;
-                    if (page > 1) pagination.prevPage = page - 1;
-
-                    results = Object.values(JSON.parse(JSON.stringify(results)));
-                    db.query(
-                        "call sp_filter_crime_subtype(?,?,?,?)",
-                        [sub_type, skip, limit, sort],
-                        (err, result) => {
-                            if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-                                return res.json({
-                                    success: 0,
-                                    message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-                                });
-                            } else if (err) {
-                                return res.status(200).json({
-                                    success: 0,
-                                    message: err.message,
-                                });
-                            }
-                            result = Object.values(JSON.parse(JSON.stringify(result[0])));
-
-                            res.status(200).json({
-                                success: 1,
-                                message: "success",
-                                pagination,
-                                data: result,
-                            });
-                        }
-                    );
-                }
-            );
-        }
-
-    }),
-    createSubtype: asyncHandler(async (req, res) => {
-        let { c_sub_type_name, type_id } =
-            req.body;
-        db.query(
-            "insert into t_crime_sub_type (c_sub_type_name,type_id) values (?,?) ",
-            [c_sub_type_name, type_id],
-            (err, results) => {
-                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-                    return res.json({
-                        success: 0,
-                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-                    });
-                } else if (err) {
-                    return res.status(200).json({
-                        success: 0,
-                        message: err.message,
-                    });
-                }
-
-                res.status(200).json({
-                    success: 1,
-                    message: "success",
-                    data: results,
-                });
-
-
-            }
-        );
-    }),
-
-    showSubtype: asyncHandler(async (req, res) => {
-        db.query(
-            "select * from t_crime_sub_type left join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id",
-            [],
-            (err, results) => {
-                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-                    return res.json({
-                        success: 0,
-                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-                    });
-                } else if (err) {
-                    return res.status(200).json({
-                        success: 0,
-                        message: err.message,
-                    });
-                }
-
-                res.status(200).json({
-                    success: 1,
-                    message: "success",
-                    data: results,
-                });
-
-
-            }
-        );
-    }),
-    updateCrimeType: asyncHandler(async (req, res) => {
-        let { c_sub_type_name, type_id, c_sub_type_id } = req.body;
-        db.query(
-            "update t_crime_sub_type set c_sub_type_name=? , type_id = ? where c_sub_type_id=?",
-            [c_sub_type_name, type_id, c_sub_type_id],
-            (err, results) => {
-                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
-                    return res.json({
-                        success: 0,
-                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
-                    });
-                } else if (err) {
-                    return res.status(200).json({
-                        success: 0,
-                        message: err.message,
-                    });
-                }
-
-                res.status(200).json({
-                    success: 1,
-                    message: "success",
-                    data: results,
-                });
-
-
-            }
-        );
-    }),
-    deleteSub: asyncHandler(async (req, res) => {
-        if (req.params.c_type_id) {
-            db.query(
-                "delete from t_crime_sub_type where c_sub_type_id = ?",
-                [req.params.c_type_id],
+                "update t_division set d_name=? where d_id = ?",
+                [d_name, d_id],
                 (err, results) => {
                     if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
                         return res.json({
@@ -430,17 +285,63 @@ module.exports = {
                         message: "success",
                         data: results,
                     });
-
-
                 }
             );
         }
-        else {
-            res.status(501).json({
-                success: 0,
-                message: "id must be filled"
-            });
 
+    }),
+    update_division_tab: asyncHandler(async (req, res, err) => {
+        if (empty(req.body.tab_name)) {
+            res.status(200).json({
+                success: 0,
+                message: "tab_name cannot be empty",
+            });
+        }
+        else if (empty(req.body.tab_detail)) {
+            res.status(200).json({
+                success: 0,
+                message: "tab_detail cannot be empty",
+            });
+        }
+        else if (empty(req.body.tab_id)) {
+            res.status(200).json({
+                success: 0,
+                message: "tab_id cannot be empty",
+            });
+        }
+        else if (empty(req.body.d_id)) {
+            res.status(200).json({
+                success: 0,
+                message: "d_id cannot be empty",
+            });
+        }
+        else {
+            let { tab_name, tab_detail, d_id, tab_id } = req.body;
+
+            db.query(
+                "update t_division_tab set  tab_name=?, tab_detail=?, d_id=? where tab_id = ? ;",
+                [tab_name, tab_detail, d_id, tab_id],
+                (err, results) => {
+                    if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                        return res.json({
+                            success: 0,
+                            message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                        });
+                    } else if (err) {
+                        return res.status(200).json({
+                            success: 0,
+                            message: err.message,
+                        });
+                    }
+
+                    res.status(200).json({
+                        success: 1,
+                        message: "success",
+                        data: results,
+                    });
+                }
+            );
         }
     }),
+
 };

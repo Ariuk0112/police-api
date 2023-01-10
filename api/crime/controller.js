@@ -284,7 +284,7 @@ module.exports = {
         let type = req.query.type;
         if (type == "month") {
             db.query(
-                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id  WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) group by type_name order by count desc",
+                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id  WHERE t_crime.c_date  >now() - INTERVAL 1 month group by type_name order by count desc",
                 [],
 
                 (err, results) => {
@@ -310,7 +310,7 @@ module.exports = {
         }
         else if (type == 'season') {
             db.query(
-                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE - INTERVAL 3 MONTH) group by type_name order by count desc;",
+                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id WHERE t_crime.c_date >now() - INTERVAL 3 month group by type_name order by count desc;",
                 [],
 
                 (err, results) => {
@@ -336,7 +336,7 @@ module.exports = {
         }
         else if (type == 'year') {
             db.query(
-                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id  WHERE YEAR(t_crime.c_date) = YEAR(CURRENT_DATE - INTERVAL 1 YEAR) AND MONTH(t_crime.c_date) = MONTH(CURRENT_DATE) group by type_name order by count desc;",
+                "select count(c_id) as count , type_name from t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id  WHERE t_crime.c_date >now() - INTERVAL 1 year group by type_name order by count desc;",
                 [],
 
                 (err, results) => {
