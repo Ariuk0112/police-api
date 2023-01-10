@@ -362,7 +362,7 @@ module.exports = {
         }
         else if (empty(type)) {
             db.query(
-                "select count(c_id) as count ,c_type from t_crime group by c_type order by count desc limit 3; ",
+                "select count(c_id) as count , type_name from t_crime right join t_crime_sub_type  on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name right join t_report_type on t_report_type.type_id = t_crime_sub_type.type_id  where type_name not in('Тодорхойгүй') group by t_report_type.type_name order by count desc limit 11",
                 [],
 
                 (err, results) => {
