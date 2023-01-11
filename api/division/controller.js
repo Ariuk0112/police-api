@@ -15,8 +15,8 @@ module.exports = {
             });
         }
         else {
-            let d_name = req.body;
-
+            let d_name = req.body.d_name;
+            console.log(d_name);
             db.query(
                 "insert into t_division (d_name) values (?);",
                 [d_name],
@@ -167,7 +167,7 @@ module.exports = {
         else {
 
             db.query(
-                "select * from t_division_tab join t_division on t_division_tab.d_id = t_division.d_id where t_division.d_id = ? ",
+                "select t_division_tab.*,t_division.d_name from t_division_tab join t_division on t_division_tab.d_id = t_division.d_id where t_division.d_id = ? ",
                 [d_id],
                 (err, result) => {
                     if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
@@ -182,12 +182,38 @@ module.exports = {
                         });
                     }
                     result = Object.values(JSON.parse(JSON.stringify(result)));
+                    if (empty(result)) {
+                        db.query(
+                            "select d_name from t_division  where d_id = ? ",
+                            [d_id],
+                            (err, result) => {
+                                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                                    return res.json({
+                                        success: 0,
+                                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                                    });
+                                } else if (err) {
+                                    return res.status(200).json({
+                                        success: 0,
+                                        message: err.message,
+                                    });
+                                }
+                                result = Object.values(JSON.parse(JSON.stringify(result)));
+                                res.status(200).json({
+                                    success: 1,
+                                    message: "success",
+                                    data: result,
+                                });
+                            })
+                    }
+                    else {
+                        res.status(200).json({
+                            success: 1,
+                            message: "success",
+                            data: result,
+                        });
+                    }
 
-                    res.status(200).json({
-                        success: 1,
-                        message: "success",
-                        data: result,
-                    });
                 }
             );
         }
@@ -221,10 +247,10 @@ module.exports = {
         );
     }),
     deleteDivTab: asyncHandler(async (req, res) => {
-        let d_id = req.params.id;
+        let tab_id = req.params.id;
         db.query(
-            "delete from t_division where d_id = ?",
-            [d_id],
+            "delete from t_division_tab where tab_id = ?",
+            [tab_id],
             (err, results) => {
                 if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
                     return res.json({

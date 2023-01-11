@@ -56,6 +56,7 @@ module.exports = {
   }),
 
   showSubCategoryWithCatId: asyncHandler(async (req, res) => {
+    console.log('object');
     db.query(
       "select cat_name , cat_name_en , sub_cat_id , sub_cat_name,sub_cat_name_en,sub_cat_link from t_category inner join t_sub_category on t_category.cat_id = t_sub_category.cat_id where t_sub_category.cat_id = ?;",
       [req.params.id],
@@ -154,8 +155,9 @@ module.exports = {
     );
   }),
 
-  showSubCategory: asyncHandler(async (req, res) => {
-    db.query("select * from t_sub_category;", [], (err, results) => {
+  subCategory: asyncHandler(async (req, res) => {
+    console.log('results');
+    db.query("select * from t_sub_category where cat_id= (select cat_id from t_sub_category where sub_cat_id = ?)", [req.params.id], (err, results) => {
       if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
         return res.json({
           success: 0,
@@ -167,9 +169,10 @@ module.exports = {
           message: err.message,
         });
       }
-      results = Object.values(JSON.parse(JSON.stringify(results)));
+
+
       res.status(200).json({
-        success: 1,
+        success: 0,
         message: "success",
         data: results,
       });

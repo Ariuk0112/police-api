@@ -4,7 +4,7 @@ const {
   createCategory,
   showAllCategory,
   createSubCategory,
-  showSubCategory,
+  subCategory,
   updateCategory,
   updateSubCategory,
   deleteCategory,
@@ -14,12 +14,13 @@ const {
 router.post("/", auth, createCategory);
 router.put("/", auth, updateCategory);
 router.get("/", showAllCategory);
-router.get("/:id", showSubCategoryWithCatId);
 router.delete("/:id", auth, deleteCategory);
 
 router.post("/subCategory", auth, createSubCategory);
 router.put("/subCategory", auth, updateSubCategory);
-router.get("/subCategory", showSubCategory);
+router.get("/subCategory/:id", subCategory);
 router.delete("/subCategory/:id", auth, deleteSubCategory);
 
+
+router.get("/:id", showSubCategoryWithCatId);
 module.exports = router;
