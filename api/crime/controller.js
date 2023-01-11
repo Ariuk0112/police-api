@@ -251,7 +251,7 @@ module.exports = {
 
                     results = Object.values(JSON.parse(JSON.stringify(results)));
                     db.query(
-                        "SELECT t_crime.* FROM data_police.t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id where t_report_type.type_name =? order by createdAt desc limit ?,?",
+                        "SELECT t_crime.* FROM data_police.t_crime join t_crime_sub_type on t_crime.c_sub_type_name = t_crime_sub_type.c_sub_type_name join t_report_type on t_crime_sub_type.type_id = t_report_type.type_id where t_report_type.type_name =? order by c_date desc limit ?,?",
                         [type, skip, limit],
                         (err, result) => {
                             if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
@@ -588,5 +588,51 @@ module.exports = {
             });
 
         }
+    }),
+    deleteLastImport: asyncHandler(async (req, res) => {
+        db.query(
+            "select max(last_updated_id) as id from t_crime;",
+            [],
+            (err, result) => {
+                if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                    return res.json({
+                        success: 0,
+                        message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                    });
+                } else if (err) {
+                    return res.status(200).json({
+                        success: 0,
+                        message: err.message,
+                    });
+                }
+                console.log();
+                db.query(
+                    "delete from t_crime where last_updated_id = ?;",
+                    [result[0].id],
+                    (err, results) => {
+                        if (err && err.message.startsWith("ER_SIGNAL_EXCEPTION")) {
+                            return res.json({
+                                success: 0,
+                                message: err.message.replace("ER_SIGNAL_EXCEPTION: ", ""),
+                            });
+                        } else if (err) {
+                            return res.status(200).json({
+                                success: 0,
+                                message: err.message,
+                            });
+                        }
+
+                        res.status(200).json({
+                            success: 1,
+                            message: "success",
+                            data: results,
+                        });
+
+                    }
+                );
+
+            }
+        );
+
     }),
 };
